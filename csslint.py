@@ -7,7 +7,7 @@ from statusprocess import *
 from asyncprocess import *
 
 RESULT_VIEW_NAME = 'csslint_result_view'
-SETTINGS_FILE = "sublime-csslint.sublime-settings"
+SETTINGS_FILE = "CSSLint.sublime-settings"
 
 class CsslintCommand(sublime_plugin.WindowCommand):  
 	def run(self):  
@@ -27,8 +27,8 @@ class CsslintCommand(sublime_plugin.WindowCommand):
 		# create the csslint command
 		# cmd = 'csslint' + ' --format=compact ' + " '" + file_path.encode('utf-8') + "'"
 
-		rhino_path = settings.get('rhino_path', '"' + sublime.packages_path() + '/sublime-csslint/scripts/rhino/js.jar' + '"')
-		csslint_rhino_js = settings.get('csslint_rhino_js', '"' + sublime.packages_path() + '/sublime-csslint/scripts/csslint/csslint-rhino.js' + '"')
+		rhino_path = settings.get('rhino_path', '"' + sublime.packages_path() + '/CSSLint/scripts/rhino/js.jar' + '"')
+		csslint_rhino_js = settings.get('csslint_rhino_js', '"' + sublime.packages_path() + '/CSSLint/scripts/csslint/csslint-rhino.js' + '"')
 		options = '--format=compact'
 
 		cmd = 'java -jar ' + rhino_path + ' ' + csslint_rhino_js + ' ' + options + ' "' + file_path.encode('utf-8') + '"'

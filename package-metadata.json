@@ -1,6 +1,0 @@
-{
-	"url": "https://github.com/austinhappel/sublime-csslint",
-	"version": "0.1.0",
-	"description": "CSS Linter for Sublime Text 2, based on the code quality tool at http://csslint.net",
-	"author": "Austin Happel"
-}
