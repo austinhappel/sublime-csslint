@@ -29,7 +29,7 @@ Takes the power of [csslint.net](http://csslint.net) and puts it into Sublime Te
 
 ## Thanks
 
-Much of this plugin has been copied from the [sublime-jslint](https://github.com/fbzhong/sublime-jslint) project. I liked how that plugin worked, and based this project off of it. Much thanks to [fbshong](https://github.com/fbzhong) for that!
+Much of this plugin has been copied from the [sublime-jslint](https://github.com/fbzhong/sublime-jslint) project. I liked how that plugin worked, and based this project off of it. Much thanks to [fbzhong](https://github.com/fbzhong) for that!
 
 ## Other Notes
 
