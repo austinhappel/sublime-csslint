@@ -13,6 +13,10 @@ class CsslintCommand(sublime_plugin.WindowCommand):
 	def run(self):  
 		settings = sublime.load_settings('SETTINGS_FILE')
 
+		if self.window.active_view().file_name() == None:
+			print "csslint: Please save your file before running this command."
+			return
+
 		file_path = self.window.active_view().file_name()
 		file_name = os.path.basename(file_path)
 
@@ -24,7 +28,7 @@ class CsslintCommand(sublime_plugin.WindowCommand):
 
 		self.init_tests_panel()
 		
-		# create the csslint command
+		# create the csslint command for node
 		# cmd = 'csslint' + ' --format=compact ' + " '" + file_path.encode('utf-8') + "'"
 
 		rhino_path = settings.get('rhino_path', '"' + sublime.packages_path() + '/CSSLint/scripts/rhino/js.jar' + '"')
