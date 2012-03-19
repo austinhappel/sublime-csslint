@@ -1,0 +1,9 @@
+{
+    // Path to the csslint jar.
+    // Leave blank to use bundled jar.
+    "csslint_rhino_js": "",
+
+    // Path to Rhino.
+    // Leave blank to use bundled version of Rhino.
+    "rhino_path": ""
+}
