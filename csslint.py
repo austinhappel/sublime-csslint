@@ -7,13 +7,42 @@ from statusprocess import *
 from asyncprocess import *
 
 RESULT_VIEW_NAME = 'csslint_result_view'
-SETTINGS_FILE = "sublime-csslint.sublime-settings"
+SETTINGS_FILE = "CSSLint.sublime-settings"
 
 class CsslintCommand(sublime_plugin.WindowCommand):  
-	def run(self):  
+	def run(self, paths = False):  
 		settings = sublime.load_settings('SETTINGS_FILE')
 
-		file_path = self.window.active_view().file_name()
+		if paths != False:
+
+			cssFiles = []
+
+			for path in paths:
+				if os.path.isdir(path) == True:
+					for path, subdirs, files in os.walk(path):
+					    for name in files:
+							thisFile = os.path.join(path, name)
+							if thisFile.endswith('.css'):
+								cssFiles.append('"' + thisFile + '"')
+				
+				elif path.endswith('.css'):
+					cssFiles.append["'" + path + "'"]
+
+			if len(cssFiles) < 1:
+				print "No CSS files found."
+				return
+
+			else:
+				file_path = ' '.join(cssFiles)
+				print file_path
+				
+		else:
+			if self.window.active_view().file_name() == None:
+				print "csslint: Please save your file before running this command."
+				return
+
+			file_path = '"' + self.window.active_view().file_name() + '"'
+		
 		file_name = os.path.basename(file_path)
 
 		self.buffered_data = ''
@@ -24,15 +53,15 @@ class CsslintCommand(sublime_plugin.WindowCommand):
 
 		self.init_tests_panel()
 		
-		# create the csslint command
+		# create the csslint command for node
 		# cmd = 'csslint' + ' --format=compact ' + " '" + file_path.encode('utf-8') + "'"
 
-		rhino_path = settings.get('rhino_path', '"' + sublime.packages_path() + '/sublime-csslint/scripts/rhino/js.jar' + '"')
-		csslint_rhino_js = settings.get('csslint_rhino_js', '"' + sublime.packages_path() + '/sublime-csslint/scripts/csslint/csslint-rhino.js' + '"')
+		rhino_path = settings.get('rhino_path', '"' + sublime.packages_path() + '/CSSLint/scripts/rhino/js.jar' + '"')
+		csslint_rhino_js = settings.get('csslint_rhino_js', '"' + sublime.packages_path() + '/CSSLint/scripts/csslint/csslint-rhino.js' + '"')
 		options = '--format=compact'
 
-		cmd = 'java -jar ' + rhino_path + ' ' + csslint_rhino_js + ' ' + options + ' "' + file_path.encode('utf-8') + '"'
- 
+		cmd = 'java -jar ' + rhino_path + ' ' + csslint_rhino_js + ' ' + options + ' ' + file_path.encode('utf-8')
+ 		print cmd
 		AsyncProcess(cmd, self)
 		StatusProcess('Starting CSSLint for file ' + file_name, self)
 
@@ -91,6 +120,10 @@ class CsslintCommand(sublime_plugin.WindowCommand):
 		self.append_data(proc, msg, True)
 
 		CsslintEventListener.disabled = False
+
+class CsslintSelectionCommand(sublime_plugin.WindowCommand):
+	def run(self, paths = []):
+		self.window.run_command('csslint', {"paths": paths})
 
 class CsslintEventListener(sublime_plugin.EventListener):
 	disabled = False
