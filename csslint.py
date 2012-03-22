@@ -9,9 +9,19 @@ from asyncprocess import *
 RESULT_VIEW_NAME = 'csslint_result_view'
 SETTINGS_FILE = "CSSLint.sublime-settings"
 
+if sublime.arch() == 'windows':
+	FOLDER_MARKER = '\\'
+else:
+	FOLDER_MARKER = '/'
+
+
 class CsslintCommand(sublime_plugin.WindowCommand):  
 	def run(self, paths = False):  
 		settings = sublime.load_settings('SETTINGS_FILE')
+
+		file_path = None
+		file_paths = None
+		self.file_paths = None
 
 		if paths != False:
 
@@ -29,12 +39,12 @@ class CsslintCommand(sublime_plugin.WindowCommand):
 					cssFiles.append["'" + path + "'"]
 
 			if len(cssFiles) < 1:
-				print "No CSS files found."
+				print "csslint: No CSS files found."
 				return
 
 			else:
-				file_path = ' '.join(cssFiles)
-				print file_path
+				self.file_paths = cssFiles
+				file_paths = ' '.join(cssFiles)
 				
 		else:
 			if self.window.active_view().file_name() == None:
@@ -43,15 +53,15 @@ class CsslintCommand(sublime_plugin.WindowCommand):
 
 			file_path = '"' + self.window.active_view().file_name() + '"'
 		
-		file_name = os.path.basename(file_path)
-
+		file_name = os.path.basename(file_path) if file_path else ', '.join(self.file_paths)
 		self.buffered_data = ''
 		self.file_path = file_path
 		self.file_name = file_name
+		path_argument = file_paths if file_paths else file_path
 		self.is_running = True
 		self.tests_panel_showed = False
 
-		self.init_tests_panel()
+		init_tests_panel(self)
 		
 		# create the csslint command for node
 		# cmd = 'csslint' + ' --format=compact ' + " '" + file_path.encode('utf-8') + "'"
@@ -60,34 +70,25 @@ class CsslintCommand(sublime_plugin.WindowCommand):
 		csslint_rhino_js = settings.get('csslint_rhino_js', '"' + sublime.packages_path() + '/CSSLint/scripts/csslint/csslint-rhino.js' + '"')
 		options = '--format=compact'
 
-		cmd = 'java -jar ' + rhino_path + ' ' + csslint_rhino_js + ' ' + options + ' ' + file_path.encode('utf-8')
+		cmd = 'java -jar ' + rhino_path + ' ' + csslint_rhino_js + ' ' + options + ' ' + path_argument.encode('utf-8')
  		print cmd
 		AsyncProcess(cmd, self)
 		StatusProcess('Starting CSSLint for file ' + file_name, self)
 
-	def init_tests_panel(self):
-		if not hasattr(self, 'output_view'):
-			self.output_view = self.window.get_output_panel(RESULT_VIEW_NAME)
-			self.output_view.set_name(RESULT_VIEW_NAME)
-		self.clear_test_view()
-		self.output_view.settings().set("file_path", self.file_path)
-
-	def show_tests_panel(self):
-		if self.tests_panel_showed:
-			return
-		self.window.run_command("show_panel", {"panel": "output."+RESULT_VIEW_NAME})
-		self.tests_panel_showed = True
-
-	def clear_test_view(self):
-		self.output_view.set_read_only(False)
-		edit = self.output_view.begin_edit()
-		self.output_view.erase(edit, sublime.Region(0, self.output_view.size()))
-		self.output_view.end_edit(edit)
-		self.output_view.set_read_only(True)
+	def update_status(self, msg, progress):
+		sublime.status_message(msg + " " + progress)
 
 	def append_data(self, proc, data, end=False):
 		self.buffered_data = self.buffered_data + data.decode("utf-8")
-		data = self.buffered_data.replace(self.file_path, self.file_name).replace('\r\n', '\n').replace('\r', '\n')
+		
+		data = self.buffered_data
+
+		if self.file_paths:
+			for path in self.file_paths:
+				data = data.replace(path, path[path.rfind(FOLDER_MARKER):])
+		else:
+			data = self.buffered_data.replace(self.file_path, self.file_name).replace('\r\n', '\n').replace('\r', '\n')
+		
 		arrData = data.split('\n\n')
 
 		if end == False:
@@ -98,7 +99,7 @@ class CsslintCommand(sublime_plugin.WindowCommand):
 			self.buffered_data = data[rsep_pos+1:]
 			data = data[:rsep_pos+1]
 
-		self.show_tests_panel()
+		show_tests_panel(self)
 		selection_was_at_end = (len(self.output_view.sel()) == 1 and self.output_view.sel()[0] == sublime.Region(self.output_view.size()))
 		self.output_view.set_read_only(False)
 		edit = self.output_view.begin_edit()
@@ -106,9 +107,6 @@ class CsslintCommand(sublime_plugin.WindowCommand):
 		
 		self.output_view.end_edit(edit)
 		self.output_view.set_read_only(True)
-
-	def update_status(self, msg, progress):
-		sublime.status_message(msg + " " + progress)
 
 	def proc_terminated(self, proc):
 		if proc.returncode == 0:
@@ -157,12 +155,14 @@ class CsslintEventListener(sublime_plugin.EventListener):
 
 		# find the file view.
 		file_path = view.settings().get('file_path')
-		window = sublime.active_window()
+		windows = sublime.windows()
 		file_view = None
-		for v in window.views():
-			if v.file_name() == file_path:
-				file_view = v
-				break
+
+		for window in windows:
+			for v in window.views():
+				if str(v.file_name()) in file_path:
+					file_view = v
+					break
 		if file_view == None:
 			return
 
@@ -173,3 +173,27 @@ class CsslintEventListener(sublime_plugin.EventListener):
 
 		# highlight file_view line
 		file_view.add_regions(RESULT_VIEW_NAME, [file_region], "string")
+
+
+def init_tests_panel(self):
+	if not hasattr(self, 'output_view'):
+		self.output_view = self.window.get_output_panel(RESULT_VIEW_NAME)
+		self.output_view.set_name(RESULT_VIEW_NAME)
+	clear_test_view(self)
+	self.output_view.settings().set("file_path", self.file_path)
+
+def show_tests_panel(self):
+	if self.tests_panel_showed:
+		return
+	self.window.run_command("show_panel", {"panel": "output." + RESULT_VIEW_NAME})
+	self.tests_panel_showed = True
+
+def clear_test_view(self):
+	self.output_view.set_read_only(False)
+	edit = self.output_view.begin_edit()
+	self.output_view.erase(edit, sublime.Region(0, self.output_view.size()))
+	self.output_view.end_edit(edit)
+	self.output_view.set_read_only(True)
+
+def update_status(self, msg, progress):
+	sublime.status_message(msg + " " + progress)
