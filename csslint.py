@@ -101,11 +101,11 @@ class CsslintCommand(sublime_plugin.WindowCommand):
 
 			# truncate path for display, save full path in array.
 			for line in data_nonempty_lines:
-				full_path_string   = line[0:line.find(':')]
+				full_path_string   = line[0:line.find('css:') + 3]
 				path_to_remove     = full_path_string + ': '
 				cleaned_error_item = line.replace(path_to_remove, '')
 				found_error        = False
-
+				
 				def add_new_error():
 					new_error_stylesheet = {
 						'full_path': full_path_string,
