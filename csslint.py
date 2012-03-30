@@ -17,13 +17,13 @@ else:
 class CsslintCommand(sublime_plugin.WindowCommand):  
 	
 	def run(self, paths = False):  
-		settings         = sublime.load_settings('SETTINGS_FILE')
+		settings         = sublime.load_settings(SETTINGS_FILE)
 		self.file_path   = None
 		file_paths       = None
 		self.file_paths  = None
 		cssFiles         = []
 		self.use_console = True
-
+		
 		def add_css_to_list(path):
 			if path.endswith('.css'):
 				cssFiles.append('"' + path + '"')
@@ -60,9 +60,13 @@ class CsslintCommand(sublime_plugin.WindowCommand):
 		# Invoke console - we're linting a single file.
 		else:
 			if self.window.active_view().file_name() == None:
-				sublime.error_message("Please save your file before running CSSLint.")
+				sublime.error_message("CSSLint: Please save your file before linting.")
 				return
 			
+			if self.window.active_view().file_name().endswith('css') != True:
+				sublime.error_message("CSSLint: This is not a css file.")
+				return
+
 			self.tests_panel_showed = False
 			self.file_path = '"' + self.window.active_view().file_name() + '"'
 			init_tests_panel(self)
@@ -74,8 +78,8 @@ class CsslintCommand(sublime_plugin.WindowCommand):
 		self.file_name     = file_name
 		path_argument      = file_paths if file_paths else self.file_path
 		self.is_running    = True
-		rhino_path         = settings.get('rhino_path', '"' + sublime.packages_path() + '/CSSLint/scripts/rhino/js.jar' + '"')
-		csslint_rhino_js   = settings.get('csslint_rhino_js', '"' + sublime.packages_path() + '/CSSLint/scripts/csslint/csslint-rhino.js' + '"')
+		rhino_path         = settings.get('rhino_path') if settings.has('rhino_path') and settings.get('rhino_path') != False else '"' + sublime.packages_path() + '/CSSLint/scripts/rhino/js.jar' + '"'
+		csslint_rhino_js   = settings.get('csslint_rhino_js') if settings.has('csslint_rhino_js') and settings.get('csslint_rhino_js') != False else '"' + sublime.packages_path() + '/CSSLint/scripts/csslint/csslint-rhino.js' + '"'
 		options            = '--format=compact'
 		cmd                = 'java -jar ' + rhino_path + ' ' + csslint_rhino_js + ' ' + options + ' ' + path_argument.encode('utf-8')
 
