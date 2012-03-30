@@ -2,6 +2,7 @@
 
 Takes the power of [csslint.net](http://csslint.net) and puts it into Sublime Text. Instead of copying and pasting your CSS into the [csslint.net](http://csslint.net) static analysis tool, all you have to do is hit `ctrl + alt + c` and any warnings are displayed in your console. You can also click on those warnings in the console, and the specific line will be highlighted in your code.
 
+You can also lint multiple files at a time by selecting them in the sidebar and selecing `CSSLint Selection`. A new document will open and display the lint data, sorted by filename.
 
 ## Installation
 
@@ -15,6 +16,7 @@ Takes the power of [csslint.net](http://csslint.net) and puts it into Sublime Te
 
 2. Make sure Java is installed, and that `java` is in your PATH.
 
+3. Rename the package folder from "sublime-csslint" to "CSSLint".
 
 ## Usage
 
