@@ -80,7 +80,9 @@ class CsslintCommand(sublime_plugin.WindowCommand):
 		self.is_running    = True
 		rhino_path         = settings.get('rhino_path') if settings.has('rhino_path') and settings.get('rhino_path') != False else '"' + sublime.packages_path() + '/CSSLint/scripts/rhino/js.jar' + '"'
 		csslint_rhino_js   = settings.get('csslint_rhino_js') if settings.has('csslint_rhino_js') and settings.get('csslint_rhino_js') != False else '"' + sublime.packages_path() + '/CSSLint/scripts/csslint/csslint-rhino.js' + '"'
-		options            = '--format=compact'
+		errors             = ' --errors=' + ','.join(settings.get('errors')) if isinstance(settings.get('errors'), list) and len(settings.get('errors')) > 0 else ''
+		warnings           = ' --warnings=' + ','.join(settings.get('warnings')) if isinstance(settings.get('warnings'), list) and len(settings.get('warnings')) > 0 else ''
+		options            = '--format=compact' + errors + warnings
 		cmd                = 'java -jar ' + rhino_path + ' ' + csslint_rhino_js + ' ' + options + ' ' + path_argument.encode('utf-8')
 
 		AsyncProcess(cmd, self)
