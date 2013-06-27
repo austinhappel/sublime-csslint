@@ -7,11 +7,14 @@
     // Leave false to use bundled version of Rhino.
     "rhino_path": false,
 
-    // Errors/Warnings: refer to https://github.com/stubbornella/csslint/wiki/Command-line-interface
+    // Errors/Warnings/Ignore: refer to https://github.com/stubbornella/csslint/wiki/Command-line-interface
 
     // CSSLint rules you wish to define as errors. Must be an array. Leave blank to include all default rules.
     "errors": [],
 
     // CSSLint rules you wish to define as warnings. Must be an array. Leave blank to include all default rules.
-    "warnings": []
+    "warnings": [],
+
+    // CSSLint rules you wish to ignore. Must be an array. Leave blank to include all default rules.
+    "ignore": []
 }
