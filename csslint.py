@@ -14,16 +14,16 @@ if sublime.arch() == 'windows':
 else:
 	FOLDER_MARKER = '/'
 
-class CsslintCommand(sublime_plugin.WindowCommand):  
-	
-	def run(self, paths = False):  
+class CsslintCommand(sublime_plugin.WindowCommand):
+
+	def run(self, paths = False):
 		settings         = sublime.load_settings(SETTINGS_FILE)
 		self.file_path   = None
 		file_paths       = None
 		self.file_paths  = None
 		cssFiles         = []
 		self.use_console = True
-		
+
 		def add_css_to_list(path):
 			if path.endswith('.css'):
 				cssFiles.append('"' + path + '"')
@@ -50,7 +50,7 @@ class CsslintCommand(sublime_plugin.WindowCommand):
 			else:
 				self.file_paths = cssFiles
 				file_paths      = ' '.join(cssFiles)
-				
+
 				# set up new file for lint results
 				self.current_document = sublime.active_window().new_file()
 				edit = self.current_document.begin_edit()
@@ -62,7 +62,7 @@ class CsslintCommand(sublime_plugin.WindowCommand):
 			if self.window.active_view().file_name() == None:
 				sublime.error_message("CSSLint: Please save your file before linting.")
 				return
-			
+
 			if self.window.active_view().file_name().endswith('css') != True:
 				sublime.error_message("CSSLint: This is not a css file.")
 				return
@@ -71,7 +71,7 @@ class CsslintCommand(sublime_plugin.WindowCommand):
 			self.file_path = '"' + self.window.active_view().file_name() + '"'
 			init_tests_panel(self)
 			show_tests_panel(self)
-		
+
 		# Begin linting.
 		file_name          = os.path.basename(self.file_path) if self.file_path else ', '.join(self.file_paths)
 		self.buffered_data = ''
@@ -82,7 +82,8 @@ class CsslintCommand(sublime_plugin.WindowCommand):
 		csslint_rhino_js   = settings.get('csslint_rhino_js') if settings.has('csslint_rhino_js') and settings.get('csslint_rhino_js') != False else '"' + sublime.packages_path() + '/CSSLint/scripts/csslint/csslint-rhino.js' + '"'
 		errors             = ' --errors=' + ','.join(settings.get('errors')) if isinstance(settings.get('errors'), list) and len(settings.get('errors')) > 0 else ''
 		warnings           = ' --warnings=' + ','.join(settings.get('warnings')) if isinstance(settings.get('warnings'), list) and len(settings.get('warnings')) > 0 else ''
-		options            = '--format=compact' + errors + warnings
+		ignores            = ' --ignore=' + ','.join(settings.get('ignore')) if isinstance(settings.get('ignore'), list) and len(settings.get('ignore')) > 0 else ''
+		options            = '--format=compact' + errors + warnings + ignores
 		cmd                = 'java -jar ' + rhino_path + ' ' + csslint_rhino_js + ' ' + options + ' ' + path_argument.encode('utf-8')
 
 		AsyncProcess(cmd, self)
@@ -92,7 +93,7 @@ class CsslintCommand(sublime_plugin.WindowCommand):
 		sublime.status_message(msg + " " + progress)
 
 	def process_data(self, proc, data, end=False):
-		
+
 		# truncate file paths but save them in an array.
 		# add error number to each line - needed for finding full path.
 		def munge_errors(data):
@@ -111,11 +112,11 @@ class CsslintCommand(sublime_plugin.WindowCommand):
 				path_to_remove     = full_path_string + ': '
 				cleaned_error_item = line.replace(path_to_remove, '')
 				found_error        = False
-				
+
 				def add_new_error():
 					new_error_stylesheet = {
 						'full_path': full_path_string,
-						'items': [cleaned_error_item] 
+						'items': [cleaned_error_item]
 					}
 					self.errors.append(new_error_stylesheet)
 
@@ -124,10 +125,10 @@ class CsslintCommand(sublime_plugin.WindowCommand):
 						found_error = True
 						error['items'].append(cleaned_error_item)
 						break
-				
+
 				if found_error == False:
 					add_new_error()
-		
+
 		# Concatenate buffered data but prevent duplicates.
 		self.buffered_data = self.buffered_data + data.decode("utf-8")
 		data = self.buffered_data.replace('\r\n', '\n').replace('\r', '\n')
@@ -139,7 +140,7 @@ class CsslintCommand(sublime_plugin.WindowCommand):
 				return
 			self.buffered_data = data[rsep_pos+1:]
 			data = data[:rsep_pos+1]
-		
+
 		munge_errors(data)
 
 		# Push to display.
@@ -154,16 +155,16 @@ class CsslintCommand(sublime_plugin.WindowCommand):
 			msg = ''
 		else:
 			msg = ''
-		
+
 		self.process_data(proc, msg, True)
 
 	def output_to_console(self):
 		self.output_view.set_read_only(False)
 		edit = self.output_view.begin_edit()
-		
+
 		for error_section in self.errors:
 			self.output_view.insert(edit, self.output_view.size(), '\n'.join(error_section['items']))
-		
+
 		self.output_view.end_edit(edit)
 		self.output_view.set_read_only(True)
 		CsslintEventListener.disabled = False
@@ -176,14 +177,14 @@ class CsslintCommand(sublime_plugin.WindowCommand):
 			self.current_document.insert(edit, self.current_document.size(), error_output)
 
 		self.current_document.end_edit(edit)
-		
+
 class CsslintSelectionCommand(sublime_plugin.WindowCommand):
 	def run(self, paths = []):
 		self.window.run_command('csslint', {"paths": paths})
 
 class CsslintEventListener(sublime_plugin.EventListener):
 	disabled = False
-	
+
 	def __init__(self):
 		self.previous_region = None
 		self.file_view = None
@@ -220,12 +221,11 @@ class CsslintEventListener(sublime_plugin.EventListener):
 		# highlight file_view line
 		file_view.add_regions(RESULT_VIEW_NAME, [file_region], "string")
 
-
 def init_tests_panel(self):
 	if not hasattr(self, 'output_view'):
 		self.output_view = self.window.get_output_panel(RESULT_VIEW_NAME)
 		self.output_view.set_name(RESULT_VIEW_NAME)
-	
+
 	clear_test_view(self)
 	self.output_view.settings().set("file_path", self.file_path)
 
