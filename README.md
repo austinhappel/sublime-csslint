@@ -28,6 +28,19 @@ You can also lint multiple files at a time by selecting them in the sidebar and 
 
 		{ "keys": ["ctrl+alt+c"], "command": "csslint" }
 
+### Advanced Usage
+* Each CSS Lint rule has an ID that can be found in this file: https://github.com/austinhappel/sublime-csslint/blob/master/scripts/csslint/csslint-rhino.js
+* To ignore certain rules of CSS Lint, you will need to amend the Preferences > Package Settings > CSS Lint > User Preferences file. This will be blank by default. Just copy/paste the Default preferences file and then amend to suit.
+* Therefore as an example:
+
+````
+{
+    // CSSLint rules you wish to ignore. Must be an array. Leave blank to include all default rules.
+    "ignore": ["floats","universal-selector","box-model","unqualified-attributes"]
+}
+````
+
+This would ignore messages about **floats**, the **universal selector**, **box-model** and **unqualified attributes**.
 
 ## Thanks
 
