@@ -83,7 +83,7 @@ class CsslintCommand(sublime_plugin.TextCommand, sublime_plugin.WindowCommand):
 		warnings           = ' --warnings=' + ','.join(settings.get('warnings')) if isinstance(settings.get('warnings'), list) and len(settings.get('warnings')) > 0 else ''
 		ignores            = ' --ignore=' + ','.join(settings.get('ignore')) if isinstance(settings.get('ignore'), list) and len(settings.get('ignore')) > 0 else ''
 		options            = '--format=compact' + errors + warnings + ignores
-		cmd                = 'java -jar ' + rhino_path + ' ' + csslint_rhino_js + ' ' + options + ' ' + path_argument.encode('utf-8')
+		cmd                = 'java -jar ' + rhino_path + ' ' + csslint_rhino_js + ' ' + options + ' ' + path_argument
 
 		AsyncProcess(cmd, self)
 		StatusProcess('Starting CSSLint for file ' + file_name, self)
