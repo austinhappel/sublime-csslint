@@ -189,7 +189,7 @@ class CsslintEventListener(sublime_plugin.EventListener):
 		self.previous_region = None
 		self.file_view = None
 
-	def on_selection_modified(self, view):
+	def on_selection_modified_async(self, view):
 		if CsslintEventListener.disabled:
 			return
 		if view.name() != RESULT_VIEW_NAME:
