@@ -3,8 +3,8 @@ import re
 import sublime
 import sublime_plugin
 import platform
-from statusprocess import *
-from asyncprocess import *
+from .statusprocess import *
+from .asyncprocess import *
 
 RESULT_VIEW_NAME = 'csslint_result_view'
 SETTINGS_FILE    = "CSSLint.sublime-settings"
@@ -36,7 +36,7 @@ class CsslintCommand(sublime_plugin.WindowCommand):
 			for path in paths:
 				if os.path.isdir(path) == True:
 					for path, subdirs, files in os.walk(path):
-					    for name in files:
+						for name in files:
 							add_css_to_list(os.path.join(path, name))
 
 				else:
