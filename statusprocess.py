@@ -1,4 +1,4 @@
-import thread
+import _thread
 import functools
 import time
 import sublime
@@ -7,7 +7,7 @@ class StatusProcess(object):
   def __init__(self, msg, listener):
     self.msg = msg
     self.listener = listener
-    thread.start_new_thread(self.run_thread, ())
+    _thread.start_new_thread(self.run_thread, ())
 
   def run_thread(self):
     progress = ""

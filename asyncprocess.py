@@ -1,5 +1,5 @@
 import os
-import thread
+import _thread
 import subprocess
 import functools
 import time
@@ -14,12 +14,12 @@ class AsyncProcess(object):
     self.proc = subprocess.Popen(self.cmd, env={"PATH": os.environ['PATH']}, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
     if self.proc.stdout:
-      thread.start_new_thread(self.read_stdout, ())
+      _thread.start_new_thread(self.read_stdout, ())
 
     if self.proc.stderr:
-      thread.start_new_thread(self.read_stderr, ())
+      _thread.start_new_thread(self.read_stderr, ())
 
-    thread.start_new_thread(self.poll, ())
+    _thread.start_new_thread(self.poll, ())
 
   def poll(self):
     while True:
