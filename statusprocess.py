@@ -1,6 +1,6 @@
-try:
+try:  # ST3
     import _thread as thread
-except ImportError:
+except ImportError:  # ST2
     import thread
 
 import functools

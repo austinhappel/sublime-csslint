@@ -3,8 +3,15 @@ import re
 import sublime
 import sublime_plugin
 import platform
-from statusprocess import *
-from asyncprocess import *
+try:  # ST3
+    from .statusprocess import *
+except ValueError:  # ST2
+    from statusprocess import *
+
+try:  # ST3
+    from .asyncprocess import *
+except ValueError:  # ST2
+    from asyncprocess import *
 
 RESULT_VIEW_NAME = 'csslint_result_view'
 SETTINGS_FILE    = "CSSLint.sublime-settings"

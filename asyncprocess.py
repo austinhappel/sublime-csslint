@@ -1,6 +1,6 @@
-try:
+try:  # ST3
     import _thread as thread
-except ImportError:
+except ImportError:  # ST2
     import thread
 import os
 
@@ -16,7 +16,11 @@ class AsyncProcess(object):
         self.listener = listener
         #print "DEBUG_EXEC: " + str(self.cmd)
 
-        self.proc = subprocess.Popen(self.cmd, env={"PATH": os.environ['PATH']}, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        self.proc = subprocess.Popen(self.cmd,
+                                     env={"PATH": os.environ['PATH']},
+                                     shell=True,
+                                     stdout=subprocess.PIPE,
+                                     stderr=subprocess.PIPE)
 
         if self.proc.stdout:
             thread.start_new_thread(self.read_stdout, ())
