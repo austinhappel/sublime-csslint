@@ -3,8 +3,8 @@ import re
 import sublime
 import sublime_plugin
 import platform
-from statusprocess import *
-from asyncprocess import *
+from .statusprocess import *
+from .asyncprocess import *
 
 RESULT_VIEW_NAME = 'csslint_result_view'
 SETTINGS_FILE    = "CSSLint.sublime-settings"
@@ -14,10 +14,11 @@ if sublime.arch() == 'windows':
 else:
 	FOLDER_MARKER = '/'
 
-class CsslintCommand(sublime_plugin.WindowCommand):
+class CsslintCommand(sublime_plugin.TextCommand, sublime_plugin.WindowCommand):
 
-	def run(self, paths = False):
+	def run(self, edit, paths = False):
 		settings         = sublime.load_settings(SETTINGS_FILE)
+		self.edit        = edit
 		self.file_path   = None
 		file_paths       = None
 		self.file_paths  = None
@@ -36,7 +37,7 @@ class CsslintCommand(sublime_plugin.WindowCommand):
 			for path in paths:
 				if os.path.isdir(path) == True:
 					for path, subdirs, files in os.walk(path):
-					    for name in files:
+						for name in files:
 							add_css_to_list(os.path.join(path, name))
 
 				else:
@@ -53,22 +54,20 @@ class CsslintCommand(sublime_plugin.WindowCommand):
 
 				# set up new file for lint results
 				self.current_document = sublime.active_window().new_file()
-				edit = self.current_document.begin_edit()
-				self.current_document.insert(edit, self.current_document.size(), 'CSSLint Results\n\n')
-				self.current_document.end_edit(edit)
+				self.current_document.insert(self.edit, self.current_document.size(), 'CSSLint Results\n\n')
 
 		# Invoke console - we're linting a single file.
 		else:
-			if self.window.active_view().file_name() == None:
+			if self.view.window().active_view().file_name() == None:
 				sublime.error_message("CSSLint: Please save your file before linting.")
 				return
 
-			if self.window.active_view().file_name().endswith('css') != True:
+			if self.view.window().active_view().file_name().endswith('css') != True:
 				sublime.error_message("CSSLint: This is not a css file.")
 				return
 
 			self.tests_panel_showed = False
-			self.file_path = '"' + self.window.active_view().file_name() + '"'
+			self.file_path = '"' + self.view.window().active_view().file_name() + '"'
 			init_tests_panel(self)
 			show_tests_panel(self)
 
@@ -84,7 +83,7 @@ class CsslintCommand(sublime_plugin.WindowCommand):
 		warnings           = ' --warnings=' + ','.join(settings.get('warnings')) if isinstance(settings.get('warnings'), list) and len(settings.get('warnings')) > 0 else ''
 		ignores            = ' --ignore=' + ','.join(settings.get('ignore')) if isinstance(settings.get('ignore'), list) and len(settings.get('ignore')) > 0 else ''
 		options            = '--format=compact' + errors + warnings + ignores
-		cmd                = 'java -jar ' + rhino_path + ' ' + csslint_rhino_js + ' ' + options + ' ' + path_argument.encode('utf-8')
+		cmd                = 'java -jar ' + rhino_path + ' ' + csslint_rhino_js + ' ' + options + ' ' + path_argument
 
 		AsyncProcess(cmd, self)
 		StatusProcess('Starting CSSLint for file ' + file_name, self)
@@ -160,27 +159,21 @@ class CsslintCommand(sublime_plugin.WindowCommand):
 
 	def output_to_console(self):
 		self.output_view.set_read_only(False)
-		edit = self.output_view.begin_edit()
 
 		for error_section in self.errors:
-			self.output_view.insert(edit, self.output_view.size(), '\n'.join(error_section['items']))
+			self.output_view.insert(self.edit, self.output_view.size(), '\n'.join(error_section['items']))
 
-		self.output_view.end_edit(edit)
 		self.output_view.set_read_only(True)
 		CsslintEventListener.disabled = False
 
 	def output_to_document(self):
-		edit = self.current_document.begin_edit()
-
 		for error_section in self.errors:
 			error_output = error_section['full_path'] + '\n\t' + '\n\t'.join(error_section['items']) + '\n\n'
-			self.current_document.insert(edit, self.current_document.size(), error_output)
-
-		self.current_document.end_edit(edit)
+			self.current_document.insert(self.edit, self.current_document.size(), error_output)
 
 class CsslintSelectionCommand(sublime_plugin.WindowCommand):
 	def run(self, paths = []):
-		self.window.run_command('csslint', {"paths": paths})
+		self.view.window().run_command('csslint', {"paths": paths})
 
 class CsslintEventListener(sublime_plugin.EventListener):
 	disabled = False
@@ -189,7 +182,7 @@ class CsslintEventListener(sublime_plugin.EventListener):
 		self.previous_region = None
 		self.file_view = None
 
-	def on_selection_modified(self, view):
+	def on_selection_modified_async(self, view):
 		if CsslintEventListener.disabled:
 			return
 		if view.name() != RESULT_VIEW_NAME:
@@ -223,7 +216,7 @@ class CsslintEventListener(sublime_plugin.EventListener):
 
 def init_tests_panel(self):
 	if not hasattr(self, 'output_view'):
-		self.output_view = self.window.get_output_panel(RESULT_VIEW_NAME)
+		self.output_view = self.view.window().get_output_panel(RESULT_VIEW_NAME)
 		self.output_view.set_name(RESULT_VIEW_NAME)
 
 	clear_test_view(self)
@@ -232,14 +225,12 @@ def init_tests_panel(self):
 def show_tests_panel(self):
 	if self.tests_panel_showed:
 		return
-	self.window.run_command("show_panel", {"panel": "output." + RESULT_VIEW_NAME})
+	self.view.window().run_command("show_panel", {"panel": "output." + RESULT_VIEW_NAME})
 	self.tests_panel_showed = True
 
 def clear_test_view(self):
 	self.output_view.set_read_only(False)
-	edit = self.output_view.begin_edit()
-	self.output_view.erase(edit, sublime.Region(0, self.output_view.size()))
-	self.output_view.end_edit(edit)
+	self.output_view.erase(self.edit, sublime.Region(0, self.output_view.size()))
 	self.output_view.set_read_only(True)
 
 def update_status(self, msg, progress):
