@@ -29,7 +29,8 @@ You can also lint multiple files at a time by selecting them in the sidebar and 
 		{ "keys": ["ctrl+alt+c"], "command": "csslint" }
 
 ### Advanced Usage
-* Each CSS Lint rule has an ID that can be found in this file: https://github.com/austinhappel/sublime-csslint/blob/master/scripts/csslint/csslint-rhino.js
+
+* Each CSS Lint rule has an ID that can be found in [this file](https://github.com/austinhappel/sublime-csslint/blob/master/scripts/csslint/csslint-rhino.js). (Look for blocks starting with `CSSLint.addRule`).
 * To ignore certain rules of CSS Lint, you will need to amend the Preferences > Package Settings > CSS Lint > User Preferences file. This will be blank by default. Just copy/paste the Default preferences file and then amend to suit.
 * Therefore as an example:
 
