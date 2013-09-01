@@ -3,11 +3,6 @@ import re
 import sublime
 import sublime_plugin
 
-try:  # ST3
-    from .asyncprocess import *
-except ValueError:  # ST2
-    from asyncprocess import *
-
 RESULT_VIEW_NAME = 'csslint_result_view'
 RESULT_REGION_NAME = 'csslint_highlighted_region'
 SETTINGS_FILE    = "CSSLint.sublime-settings"
