@@ -1,0 +1,7 @@
+CSSLint for Sublime Text
+========================
+
+Thanks for downloading this plugin! For information on how to use it, please
+refer to the readme: 
+
+https://github.com/austinhappel/sublime-csslint/blob/master/README.md

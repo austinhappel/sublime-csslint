@@ -1,0 +1,8 @@
+CSSLint v1.1.1 changelog
+========================
+
+* Added Sublime Text 3 support
+* Clicking outside of the errors list will remove the highlighted errors in
+  the editor    
+* Added messages :)
+* Refactored plugin so only one python file is needed. (Instead of 3)
