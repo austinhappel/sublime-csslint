@@ -2,6 +2,7 @@ import os
 import re
 import sublime
 import sublime_plugin
+import subprocess
 
 RESULT_VIEW_NAME = 'csslint_result_view'
 RESULT_REGION_NAME = 'csslint_highlighted_region'
