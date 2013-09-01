@@ -2,11 +2,6 @@ import os
 import re
 import sublime
 import sublime_plugin
-import platform
-try:  # ST3
-    from .statusprocess import *
-except ValueError:  # ST2
-    from statusprocess import *
 
 try:  # ST3
     from .asyncprocess import *
@@ -14,6 +9,7 @@ except ValueError:  # ST2
     from asyncprocess import *
 
 RESULT_VIEW_NAME = 'csslint_result_view'
+RESULT_REGION_NAME = 'csslint_highlighted_region'
 SETTINGS_FILE    = "CSSLint.sublime-settings"
 
 if sublime.arch() == 'windows':
@@ -78,7 +74,7 @@ class CsslintCommand(sublime_plugin.TextCommand, sublime_plugin.WindowCommand):
 
             self.tests_panel_showed = False
             self.file_path = '"' + self.view.window().active_view().file_name() + '"'
-            init_tests_panel(self)
+            # init_tests_panel(self)
             show_tests_panel(self)
 
         # Begin linting.
@@ -95,13 +91,12 @@ class CsslintCommand(sublime_plugin.TextCommand, sublime_plugin.WindowCommand):
         options            = '--format=compact' + errors + warnings + ignores
         cmd                = 'java -jar ' + rhino_path + ' ' + csslint_rhino_js + ' ' + options + ' ' + path_argument
 
-        AsyncProcess(cmd, self)
-        StatusProcess('Starting CSSLint for file ' + file_name, self)
+        self.run_linter(cmd)
 
     def update_status(self, msg, progress):
         sublime.status_message(msg + " " + progress)
 
-    def process_data(self, proc, data, end=False):
+    def process_data(self, data, end=False):
 
         # truncate file paths but save them in an array.
         # add error number to each line - needed for finding full path.
@@ -158,15 +153,6 @@ class CsslintCommand(sublime_plugin.TextCommand, sublime_plugin.WindowCommand):
         else:
             self.output_to_document()
 
-    def proc_terminated(self, proc):
-        if proc.returncode == 0:
-            # msg = self.file_name + ' lint free!'
-            msg = ''
-        else:
-            msg = ''
-
-        self.process_data(proc, msg, True)
-
     def output_to_console(self):
         self.output_view.set_read_only(False)
 
@@ -181,6 +167,18 @@ class CsslintCommand(sublime_plugin.TextCommand, sublime_plugin.WindowCommand):
             error_output = error_section['full_path'] + '\n\t' + '\n\t'.join(error_section['items']) + '\n\n'
             self.current_document.insert(self.edit, self.current_document.size(), error_output)
 
+    def run_linter(self, cmd):
+        self.proc = subprocess.Popen(cmd,
+                                     env={"PATH": os.environ['PATH']},
+                                     shell=True,
+                                     stdout=subprocess.PIPE,
+                                     stderr=subprocess.STDOUT)
+            
+        result = self.proc.communicate()[0]
+
+        if result is not None:
+            sublime.set_timeout(self.process_data(result), 0)
+
 
 class CsslintSelectionCommand(sublime_plugin.WindowCommand):
     def run(self, paths=[]):
@@ -194,7 +192,10 @@ class CsslintEventListener(sublime_plugin.EventListener):
         self.previous_region = None
         self.file_view = None
 
-    def on_selection_modified_async(self, view):
+    # for some reason on_selection_modified_async does not fire any events,
+    # but this one does.
+    def on_selection_modified(self, view):
+
         if CsslintEventListener.disabled:
             return
         if view.name() != RESULT_VIEW_NAME:
@@ -218,36 +219,44 @@ class CsslintEventListener(sublime_plugin.EventListener):
         view.add_regions(RESULT_VIEW_NAME, [region], "comment")
 
         # highlight the selected line in the active view.
-        file_path = view.settings().get('file_path')
-        file_view = sublime.active_window().active_view()
+        file_view = sublime.active_window().active_view() if self.file_view is None else self.file_view
         file_view.run_command("goto_line", {"line": line})
         file_region = file_view.line(file_view.sel()[0])
 
         # highlight file_view line
-        file_view.add_regions(RESULT_VIEW_NAME, [file_region], "string")
+        region_settings = sublime.DRAW_NO_FILL if hasattr(sublime, 'DRAW_NOFILL') else sublime.DRAW_OUTLINED
+        file_view.add_regions(RESULT_REGION_NAME, [file_region], "string", "", region_settings)
 
+        if hasattr(self, 'file_view') is True:
+            self.file_view = file_view
 
-def init_tests_panel(self):
-    if not hasattr(self, 'output_view'):
-        self.output_view = self.view.window().get_output_panel(RESULT_VIEW_NAME)
-        self.output_view.set_name(RESULT_VIEW_NAME)
-
-    clear_test_view(self)
-    self.output_view.settings().set("file_path", self.file_path)
-
+    def on_deactivated(self, view):
+        if view.name() == RESULT_VIEW_NAME:
+            if hasattr(self, 'file_view'):
+                self.file_view.erase_regions(RESULT_REGION_NAME)
 
 def show_tests_panel(self):
-    if self.tests_panel_showed:
+    """Initializes (if not already initialized) and shows the results output panel."""
+    if hasattr(self, 'tests_panel_shown') and self.tests_panel_shown is True:
         return
+
+    if not hasattr(self, 'output_view'):
+        try:  # ST3
+            self.output_view = self.view.window().create_output_panel(RESULT_VIEW_NAME)
+        except AttributeError: # ST2
+            self.output_view = self.view.window().get_output_panel(RESULT_VIEW_NAME)
+
+        self.output_view.set_name(RESULT_VIEW_NAME)
+
+        # self.output_view.settings().set("file_path", self.file_path)
+
+    clear_test_view(self)
+    
     self.view.window().run_command("show_panel", {"panel": "output." + RESULT_VIEW_NAME})
-    self.tests_panel_showed = True
+    self.tests_panel_shown = True
 
 
 def clear_test_view(self):
     self.output_view.set_read_only(False)
     self.output_view.erase(self.edit, sublime.Region(0, self.output_view.size()))
     self.output_view.set_read_only(True)
-
-
-def update_status(self, msg, progress):
-    sublime.status_message(msg + " " + progress)
