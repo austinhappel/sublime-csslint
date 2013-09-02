@@ -7,6 +7,9 @@ import subprocess
 RESULT_VIEW_NAME = 'csslint_result_view'
 RESULT_REGION_NAME = 'csslint_highlighted_region'
 SETTINGS_FILE    = "CSSLint.sublime-settings"
+PLUGIN_PATH = os.path.abspath(os.path.dirname(__file__))
+
+print(os.path.join(PLUGIN_PATH, 'scripts/rhino/js.jar'))
 
 if sublime.arch() == 'windows':
     FOLDER_MARKER = '\\'
@@ -14,7 +17,7 @@ else:
     FOLDER_MARKER = '/'
 
 
-class CsslintCommand(sublime_plugin.TextCommand, sublime_plugin.WindowCommand):
+class CsslintCommand(sublime_plugin.TextCommand):
 
     def run(self, edit, paths=False):
         settings         = sublime.load_settings(SETTINGS_FILE)
@@ -79,8 +82,8 @@ class CsslintCommand(sublime_plugin.TextCommand, sublime_plugin.WindowCommand):
         self.file_name     = file_name
         path_argument      = file_paths if file_paths else self.file_path
         self.is_running    = True
-        rhino_path         = settings.get('rhino_path') if settings.has('rhino_path') and settings.get('rhino_path') != False else '"' + sublime.packages_path() + '/CSSLint/scripts/rhino/js.jar' + '"'
-        csslint_rhino_js   = settings.get('csslint_rhino_js') if settings.has('csslint_rhino_js') and settings.get('csslint_rhino_js') != False else '"' + sublime.packages_path() + '/CSSLint/scripts/csslint/csslint-rhino.js' + '"'
+        rhino_path         = settings.get('rhino_path') if settings.has('rhino_path') and settings.get('rhino_path') != False else '"{0}"'.format(os.path.join(PLUGIN_PATH, 'scripts/rhino/js.jar'))
+        csslint_rhino_js   = settings.get('csslint_rhino_js') if settings.has('csslint_rhino_js') and settings.get('csslint_rhino_js') != False else '"{0}"'.format(os.path.join(PLUGIN_PATH, 'scripts/csslint/csslint-rhino.js'))
         errors             = ' --errors=' + ','.join(settings.get('errors')) if isinstance(settings.get('errors'), list) and len(settings.get('errors')) > 0 else ''
         warnings           = ' --warnings=' + ','.join(settings.get('warnings')) if isinstance(settings.get('warnings'), list) and len(settings.get('warnings')) > 0 else ''
         ignores            = ' --ignore=' + ','.join(settings.get('ignore')) if isinstance(settings.get('ignore'), list) and len(settings.get('ignore')) > 0 else ''
