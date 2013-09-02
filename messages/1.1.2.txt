@@ -1,0 +1,4 @@
+CSSLint v1.1.2 changelog
+========================
+
+* Minor tweaks for consistency

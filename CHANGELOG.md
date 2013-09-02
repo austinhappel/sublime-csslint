@@ -1,3 +1,8 @@
+### August 31, 2013 - v1.1.2
+
+* Tweaked file paths for calling the jarfile
+* renamed csslint.py to CSSLint.py
+
 ### August 31, 2013 - v1.1.1
 
 * Added Sublime Text 3 support
