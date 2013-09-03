@@ -4,15 +4,25 @@ import sublime
 import sublime_plugin
 import subprocess
 
+
 RESULT_VIEW_NAME = 'csslint_result_view'
 RESULT_REGION_NAME = 'csslint_highlighted_region'
 SETTINGS_FILE = "CSSLint.sublime-settings"
 PLUGIN_PATH = os.path.abspath(os.path.dirname(__file__))
+# ST3: for some reason, using sublime_packages_path() works for calling the jar scripts
+# even though nothing exists in packages/ and the package itself is zipped in
+# a .sublime-package file.
+PACKAGE_PATH = os.path.abspath(os.path.join(sublime.packages_path(), 'CSSLint'))
+SCRIPT_PATH = os.path.join(PACKAGE_PATH, 'scripts')
 
+
+def plugin_loaded():
+    """save for later"""
+    pass    
 
 class CsslintCommand(sublime_plugin.TextCommand):
 
-    def run(self, edit, paths=False):
+    def run(self, edit, paths=False, quiet=False):
         settings         = sublime.load_settings(SETTINGS_FILE)
         self.edit        = edit
         self.file_path   = None
@@ -57,11 +67,13 @@ class CsslintCommand(sublime_plugin.TextCommand):
         # Invoke console - we're linting a single file.
         else:
             if self.view.window().active_view().file_name() is None:
-                sublime.error_message("CSSLint: Please save your file before linting.")
+                if quiet is False:
+                    sublime.error_message("CSSLint: Please save your file before linting.")
                 return
 
             if self.view.window().active_view().file_name().endswith('css') is not True:
-                sublime.error_message("CSSLint: This is not a css file.")
+                if quiet is False:
+                    sublime.error_message("CSSLint: This is not a css file.")
                 return
 
             self.file_path = '"' + self.view.window().active_view().file_name() + '"'
@@ -74,8 +86,8 @@ class CsslintCommand(sublime_plugin.TextCommand):
         self.file_name     = file_name
         path_argument      = file_paths if file_paths else self.file_path
         self.is_running    = True
-        rhino_path         = settings.get('rhino_path') if settings.has('rhino_path') and settings.get('rhino_path') != False else '"{0}"'.format(os.path.join(PLUGIN_PATH, 'scripts', 'rhino', 'js.jar'))
-        csslint_rhino_js   = settings.get('csslint_rhino_js') if settings.has('csslint_rhino_js') and settings.get('csslint_rhino_js') != False else '"{0}"'.format(os.path.join(PLUGIN_PATH, 'scripts', 'csslint', 'csslint-rhino.js'))
+        rhino_path         = settings.get('rhino_path') if settings.has('rhino_path') and settings.get('rhino_path') != False else '"{0}"'.format(os.path.join(SCRIPT_PATH, 'rhino', 'js.jar'))
+        csslint_rhino_js   = settings.get('csslint_rhino_js') if settings.has('csslint_rhino_js') and settings.get('csslint_rhino_js') != False else '"{0}"'.format(os.path.join(SCRIPT_PATH, 'csslint', 'csslint-rhino.js'))
         errors             = ' --errors=' + ','.join(settings.get('errors')) if isinstance(settings.get('errors'), list) and len(settings.get('errors')) > 0 else ''
         warnings           = ' --warnings=' + ','.join(settings.get('warnings')) if isinstance(settings.get('warnings'), list) and len(settings.get('warnings')) > 0 else ''
         ignores            = ' --ignore=' + ','.join(settings.get('ignore')) if isinstance(settings.get('ignore'), list) and len(settings.get('ignore')) > 0 else ''
@@ -83,6 +95,7 @@ class CsslintCommand(sublime_plugin.TextCommand):
         cmd                = 'java -jar ' + rhino_path + ' ' + csslint_rhino_js + ' ' + options + ' ' + path_argument
 
         self.run_linter(cmd)
+
 
     def update_status(self, msg, progress):
         sublime.status_message(msg + " " + progress)
@@ -182,6 +195,12 @@ class CsslintEventListener(sublime_plugin.EventListener):
     def __init__(self):
         self.previous_region = None
         self.file_view = None
+
+    def on_post_save(self, view):
+        settings = sublime.load_settings(SETTINGS_FILE)
+
+        if settings.get('run_on_save') is True:
+            view.window().run_command("csslint", {'quiet': True})
 
     # for some reason on_selection_modified_async does not fire any events,
     # but this one does.

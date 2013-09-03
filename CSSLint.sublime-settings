@@ -16,5 +16,8 @@
     "warnings": [],
 
     // CSSLint rules you wish to ignore. Must be an array. Leave blank to include all default rules.
-    "ignore": []
+    "ignore": [],
+
+    // Whether or not you want to lint every time a document is saved.
+    "run_on_save": false
 }

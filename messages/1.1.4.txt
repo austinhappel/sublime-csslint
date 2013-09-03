@@ -1,0 +1,5 @@
+CSSLint v1.1.4 changelog
+========================
+
+* Path fixes to ensure CSSLint executable runs correctly in ST3 as a sublime-package
+* Added "run on save" feature.

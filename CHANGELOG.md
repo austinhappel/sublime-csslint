@@ -1,3 +1,9 @@
+### Sepetmber 2, 2013 - v1.1.4
+
+* Path fixes to ensure CSSLint executable runs correctly in ST3 as a sublime-package
+* Added "run on save" feature.
+
+
 ### Sepetmber 2, 2013 - v1.1.3
 
 * Path fixes for Windows
