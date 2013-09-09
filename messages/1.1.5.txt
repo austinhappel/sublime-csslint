@@ -1,0 +1,7 @@
+CSSLint v1.1.5 changelog
+========================
+
+* ST3 Updates:
+	* If CSSLint is a .sublime-package (zipped file) and the required files it 
+	  needs do not exist on disk, it will automatically extract them from the
+	  package into `Packages/CSSLint`. This _should_ fix issue 12.
