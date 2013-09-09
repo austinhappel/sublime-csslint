@@ -1,15 +1,19 @@
 import os
-from types import DictType
 from hashlib import sha256
 from pprint import pprint
+
+FILE_LIST = [
+    os.path.join('scripts/csslint/csslint-rhino.js'),
+    os.path.join('scripts/rhino/js.jar'),
+]
 
 def generate_sha256(file_path, block_size=1024):
     """Generates a sha256 checksum of the file passed in."""
 
-    f = open(file_path)
-    hash = sha256()
-
     if os.path.exists(file_path):
+        f = open(file_path, 'rb')
+        hash = sha256()
+
         while True:
             data = f.read(block_size)
             if not data:
@@ -22,7 +26,7 @@ def generate_sha256(file_path, block_size=1024):
         return False
 
     
-def check_file_match(file_list, path_prefix):
+def check_file_match(file_list, path_prefix=''):
     """
     Takes an array of file path/checksum objects and verifies that 
     the checksum matches the file in the target_dir.
@@ -30,7 +34,7 @@ def check_file_match(file_list, path_prefix):
     ret = []
 
     for file_details in file_list:
-        fp = file_details['file_path']
+        fp = os.path.join(path_prefix, file_details['file_path'])
         hash = file_details['checksum']
         isMatch = False
 
@@ -38,7 +42,7 @@ def check_file_match(file_list, path_prefix):
             isMatch = True
 
         ret.append({
-            'file_path': fp,
+            'file_path': file_details['file_path'],
             'isMatch': isMatch
             })
 
@@ -67,13 +71,14 @@ if __name__ == "__main__" :
     extracted from the .sublime-package file.
 
     This is meant to be run from within the CSSLint folder, top level.
-    """
 
-    file_list = [
-        os.path.join('scripts/csslint/csslint-rhino.js'),
-        os.path.join('scripts/rhino/js.jar'),
-    ]
+    To run in Sublime, just hit cmd + b to build and check the console.
+
+    Otherwise, you can run it in a terminal via `python version_file_checker.py`
+
+    Place the result into CSSLint.py as the variable `manifest` (you'll see it in CSSLint.py)
+    """
 
     print("===Creating CSSLint file manifest.===")
     print("Copy this into CSSLint.py if any of your scripts have changed.")
-    pprint(create_hashes(file_list), indent=4)
+    pprint(create_hashes(FILE_LIST), indent=4)

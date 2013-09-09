@@ -4,8 +4,10 @@ import sublime
 import sublime_plugin
 import subprocess
 import zipfile
-from version_file_checker import check_file_match
-
+try: # ST2
+    from version_file_checker import check_file_match
+except ImportError: # ST3
+    from .version_file_checker import check_file_match
 
 RESULT_VIEW_NAME = 'csslint_result_view'
 RESULT_REGION_NAME = 'csslint_highlighted_region'
@@ -13,25 +15,8 @@ SETTINGS_FILE = "CSSLint.sublime-settings"
 PLUGIN_PATH = os.path.abspath(os.path.dirname(__file__))
 PACKAGE_PATH = os.path.abspath(os.path.join(sublime.packages_path(), 'CSSLint'))
 SCRIPT_PATH = os.path.join(PACKAGE_PATH, 'scripts')
-MANIFEST = [
-    {   
-        'file_path': 'scripts/csslint/csslint-rhino.js',
-        'checksum': '71d63e12a904771978ddf06f22933e1f3e3812155545b844769703926f9dc027'
-    },
-    {   
-        'file_path': 'scripts/rhino/js.jar',
-        'checksum': '7ade44513268f7cfe08579f8ef69e4ea663b8613d3923491000784c650c67c8b'
-    }
-]
+MANIFEST = ''
 
-
-# with zipfile.ZipFile(os.path.join('/Users/austin/Desktop/test', 'CSSLint.sublime-package'), 'r') as z:
-# ...     z.extractall(pp)
-
-# zipr.extract('scripts/rhino/LICENSE.txt', '/Users/austin/Desktop/')
-# '/Users/austin/Desktop/scripts/rhino/LICENSE.txt'
-
-# zipr.namelist()[0]
 
 def plugin_loaded():
     """
@@ -39,15 +24,35 @@ def plugin_loaded():
     of the CSSLint and Rhino scripts and extracts them to the packages
     folder if necessary.
     """
-    file_matches = check_file_match(MANIFEST, path_prefix=PACKAGE_PATH)
+    global PLUGIN_PATH 
+    global PACKAGE_PATH
+    global SCRIPT_PATH 
+
+    PLUGIN_PATH = os.path.abspath(os.path.dirname(__file__))
+    PACKAGE_PATH = os.path.abspath(os.path.join(sublime.packages_path(), 'CSSLint'))
+    SCRIPT_PATH = os.path.join(PACKAGE_PATH, 'scripts')
+    
+    manifest = [
+        {   
+            'file_path': 'scripts/csslint/csslint-rhino.js',
+            'checksum': '71d63e12a904771978ddf06f22933e1f3e3812155545b844769703926f9dc027'
+        },
+        {   
+            'file_path': 'scripts/rhino/js.jar',
+            'checksum': '7ade44513268f7cfe08579f8ef69e4ea663b8613d3923491000784c650c67c8b'
+        }
+    ]
+
+    file_matches = check_file_match(manifest, path_prefix=PACKAGE_PATH)
 
     if '.sublime-package' in PLUGIN_PATH:
-        print('CSSLint is a .sublime-package')
+        print('CSSLint is a .sublime-package; Verifying required files.')
         package = zipfile.ZipFile(PLUGIN_PATH, 'r')
 
         for match in file_matches:
             if match['isMatch'] is False:
-                zipr.extract(match['file_path'], PACKAGE_PATH)
+                print('CSSLint: extracting {0} into {1}'.format(match['file_path'], PACKAGE_PATH))
+                package.extract(match['file_path'], PACKAGE_PATH)
 
 
 class CsslintCommand(sublime_plugin.TextCommand):
