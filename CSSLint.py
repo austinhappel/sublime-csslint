@@ -240,7 +240,6 @@ class CsslintEventListener(sublime_plugin.EventListener):
     # for some reason on_selection_modified_async does not fire any events,
     # but this one does.
     def on_selection_modified(self, view):
-
         if CsslintEventListener.disabled:
             return
         if view.name() != RESULT_VIEW_NAME:
@@ -264,7 +263,7 @@ class CsslintEventListener(sublime_plugin.EventListener):
         view.add_regions(RESULT_VIEW_NAME, [region], "comment")
 
         # highlight the selected line in the active view.
-        file_view = sublime.active_window().active_view() if self.file_view is None else self.file_view
+        file_view = sublime.active_window().active_view() # if self.file_view is None else self.file_view
         file_view.run_command("goto_line", {"line": line})
         file_region = file_view.line(file_view.sel()[0])
 
@@ -279,6 +278,7 @@ class CsslintEventListener(sublime_plugin.EventListener):
         if view.name() == RESULT_VIEW_NAME:
             if hasattr(self, 'file_view'):
                 self.file_view.erase_regions(RESULT_REGION_NAME)
+
 
 def show_tests_panel(self):
     """Initializes (if not already initialized) and shows the results output panel."""
