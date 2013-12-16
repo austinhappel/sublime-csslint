@@ -211,12 +211,16 @@ class CsslintCommand(sublime_plugin.TextCommand):
                                      env={"PATH": os.environ['PATH']},
                                      shell=True,
                                      stdout=subprocess.PIPE,
-                                     stderr=subprocess.STDOUT)
+                                     stderr=subprocess.PIPE)
             
-        result = self.proc.communicate()[0]
+        result, errors = self.proc.communicate()
+        self.proc.wait()
 
-        if result is not None:
-            sublime.set_timeout(self.process_data(result), 0)
+        if errors:
+            sublime.error_message("CSSLint Error: %s" % errors.decode('utf-8'))
+        elif result is not None:
+            # sublime.set_timeout(self.process_data(result), 0)
+            self.process_data(result)
 
 
 class CsslintSelectionCommand(sublime_plugin.WindowCommand):
@@ -252,7 +256,7 @@ class CsslintEventListener(sublime_plugin.EventListener):
             return
         self.previous_region = region
 
-        # extract line from csslint result.
+        # extract line from csslint result
         text = view.substr(region)
 
         if len(text) < 1:
@@ -277,7 +281,7 @@ class CsslintEventListener(sublime_plugin.EventListener):
 
     def on_deactivated(self, view):
         if view.name() == RESULT_VIEW_NAME:
-            if hasattr(self, 'file_view'):
+            if hasattr(self, 'file_view') and hasattr(self.file_view, 'erase_regions'):
                 self.file_view.erase_regions(RESULT_REGION_NAME)
 
 def show_tests_panel(self):
@@ -296,7 +300,6 @@ def show_tests_panel(self):
     clear_test_view(self)
     
     self.view.window().run_command("show_panel", {"panel": "output." + RESULT_VIEW_NAME})
-
 
 def clear_test_view(self):
     self.output_view.set_read_only(False)
